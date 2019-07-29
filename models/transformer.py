@@ -16,7 +16,7 @@ from .utils import Linear
 
 def get_model(task):
     if task == 'causal':
-        return CasualLM
+        return CausalLM
     elif task in ['masked', 'translation']:
         return MaskedLM
 
@@ -167,7 +167,6 @@ class MaskedLM(BaseLM):
             torch.randint_like(inputs, self.mask_idx+1, self.vocabsize),
             inputs,
         )
-        import pdb; pdb.set_trace()
         outs = self.forward(inputs).view(slen*bsz, -1)
         loss = criterion(outs, refs.view(-1))
         return loss
