@@ -39,8 +39,8 @@ Translation language modelを学習する場合は、並列コーパスを渡す
 
 ```python3
 python train.py --task casual(or masked) \
-                --train ./data/sample_train.txt \
-                --valid ./data/sample_valid.txt \
+                --train ./data/sample_train.tsv \
+                --valid ./data/sample_valid.tsv \
                 --savedir ./checkpoints \
                 --gpu
 ```
