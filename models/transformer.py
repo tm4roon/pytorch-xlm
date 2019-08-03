@@ -55,6 +55,8 @@ class BaseLM(nn.Module):
                 [TransformerDecoderLayer(args, no_encoder_attn=True) for _ in range(self.n_layers)])
 
         self.out_projection = Linear(self.embed_dim, self.vocabsize)
+        if args.tied_embed: 
+            self.out_projection.weight = self.w_embed.weight
 
     def forward(self, srcs, tgts, refs):
         raise NotImplementedError
@@ -66,9 +68,8 @@ class BaseLM(nn.Module):
 
 class CausalLM(BaseLM):
     def __init__(self, field, args):
-        super(CasualLM, self).__init__(field, args)
-        self.task_name = 'CLM'
-        assert not self.bidirectional, 'CausalLM does not contain `bidirectional` option'
+        super(CausalLM, self).__init__(field, args)
+        assert not self.bidirectional, 'CausalLM can not be `bidirectional`'
 
     def forward(self, inputs, incremental_state=None):
         # embed positions
@@ -115,7 +116,7 @@ class MaskedLM(BaseLM):
     def __init__(self, field, args, sampling=0.15, masked_rate=0.8,
                  replaced_rate=0.1, unchanged_rate=0.1):
         super(MaskedLM, self).__init__(field, args)
-        self.task_name = 'MLM'
+        self.s_embed = nn.Embedding(2, self.embed_dim)
         self.sampling = sampling
         
         assert masked_rate + replaced_rate + unchanged_rate == 1.0, \
@@ -124,13 +125,14 @@ class MaskedLM(BaseLM):
         self.replaced_rate = replaced_rate
         self.unchaged_rate = unchanged_rate
 
-    def forward(self, inputs, incremental_state=None):
+    def forward(self, inputs, segments, incremental_state=None):
         # embed positions
         positions = self.p_embed(inputs, incremental_state=None)
 
         x = self.w_embed(inputs)
         x *= self.embed_scale
         x += positions
+        x += self.s_embed(segments)
         x = F.dropout(x, p=self.dropout, training=self.training)
 
         # padding mask
@@ -147,6 +149,8 @@ class MaskedLM(BaseLM):
  
     def loss(self, criterion, srcs, tgts, refs=None):
         refs = srcs if tgts is None else torch.cat((srcs, tgts))
+        segments = torch.zeros_like(srcs) if tgts is None else torch.cat((torch.zeros_like(srcs), torch.ones_like(tgts)))
+
         slen, bsz = refs.size()
         sampler = self._sampling(refs)
 
@@ -167,7 +171,7 @@ class MaskedLM(BaseLM):
             torch.randint_like(inputs, self.mask_idx+1, self.vocabsize),
             inputs,
         )
-        outs = self.forward(inputs).view(slen*bsz, -1)
+        outs = self.forward(inputs, segments).view(slen*bsz, -1)
         loss = criterion(outs, refs.view(-1))
         return loss
 

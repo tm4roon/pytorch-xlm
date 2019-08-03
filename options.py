@@ -32,7 +32,7 @@ def train_opts(parser):
         help='number of updates')
     group.add_argument('--lr', type=float, default=0.25,
         help='learning rate')
-    group.add_argument('--min-lr', type=float, default=1e-8, 
+    group.add_argument('--min-lr', type=float, default=1e-5, 
         help='minimum learning rate')
     group.add_argument('--clip', type=float, default=1.0,
         help='gradient cliping')
@@ -64,6 +64,6 @@ def model_opts(parser):
     group.add_argument('--attention-dropout', type=float, default=0.1,
         help='dropout in self attention')
     group.add_argument('--bidirectional', action='store_true')
-    # group.add_argument('--share-embed', action='store_true',
-    #     help='tie the word embedding and softmax weight')
+    group.add_argument('--tied-embed', action='store_true',
+        help='tie the word embedding and softmax weight')
     return group

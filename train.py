@@ -28,6 +28,7 @@ from models.transformer import (
     MaskedLM,
 )
 
+monolingual_tasks = ['causal', 'masked']
 
 class LMDataset(data.Dataset):
     def __init__(self, path, text_field, encoding='utf-8', **kwargs):
@@ -49,16 +50,14 @@ def main(args):
         )
     else: 
         basedir, _ = os.path.split(args.re_training)
-        path = os.path.join(basedir, 'src.field')
+        file_name = 'text.field' if args.task in monolingual_tasks else 'src.field'
+        path = os.path.join(basedir, file_name)
         TEXT = utils.load_field(path)
 
-    fields = [('text', TEXT)] \
-             if args.task in ['causal', 'masked'] \
-             else [('src', TEXT), ('tgt', TEXT)]
+    fields = [('text', TEXT)] if args.task in monolingual_tasks else [('src', TEXT), ('tgt', TEXT)]
 
     slen_filter = lambda x: args.src_minlen <= len(x.src) <= args.src_maxlen \
                          and args.tgt_minlen <= len(x.tgt) <= args.tgt_maxlen
-
 
     # load training data
     if args.task == 'translation':
@@ -166,12 +165,13 @@ def main(args):
         best_loss = load_vars['best_loss']
         lm_args, lm_weights = load_vars['args'], load_vars['weights']
         model = model_class(TEXT, lm_args)
-        model.load_state_dict(lm_weight)
+        model.load_state_dict(lm_weights)
+        model.to(device)
 
     criterion = nn.CrossEntropyLoss(ignore_index=TEXT.vocab.stoi['<pad>'])
     optimizer_fn = utils.get_optimizer(args.optimizer)
     optimizer = optimizer_fn(model.parameters(), lr=args.lr)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min')
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=5)
     trainer = Trainer(model, criterion, optimizer, scheduler, args.clip, iteration)
 
     # show the details of model and optimizer
@@ -191,14 +191,14 @@ def main(args):
             train_loss = 0.0
             trainer.model.train()
             for samples in pbar:
-                if args.task == 'translation':
-                    srcs = samples.src.to(device)
-                    tgts = samples.tgt.to(device)
-                    refs = None
-                else: # `causal`, `masked`
+                if args.task in monolingual_tasks:
                     srcs = samples.text.to(device)
                     tgts = None
                     refs = None if args.task == 'masked' else samples.target.to(device)
+                else:
+                    srcs = samples.src.to(device)
+                    tgts = samples.tgt.to(device)
+                    refs = None
                 loss = trainer.step(srcs, tgts, refs)
                 train_loss += loss.item()
 
@@ -222,19 +222,19 @@ def main(args):
         print(f'| clip {args.clip} ', end='')
         print(f'| num_updates {trainer.n_updates} |')
         
-        # validation
+        # validatioj
         if args.valid is not None:    
             valid_loss = 0.0
             trainer.model.eval()
             for samples in valid_iter:
-                if args.task == 'translation':
-                    srcs = samples.src.to(device)
-                    tgts = samples.tgt.to(device)
-                    refs = None
-                else:
+                if args.task in monolingual_tasks:
                     srcs = samples.text.to(device)
                     tgts = None
                     refs = None if args.task == 'masked' else samples.target.to(device)
+                else:
+                    srcs = samples.src.to(device)
+                    tgts = samples.tgt.to(device)
+                    refs = None
                 loss = trainer.step(srcs, tgts, refs)
                 valid_loss += loss.item()
             valid_loss /= len(valid_iter)
