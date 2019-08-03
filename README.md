@@ -5,9 +5,6 @@
 - Causal Language Model ( —task causal)
 - Masked Language Model ( —task masked)
 - Translation Language Model ( —task translation)
-
-Causal language model, Masked language modelは単言語コーパスで学習。Translation language modelは並列コーパスで学習 (tsv format)。
-
 <br>
 
 
