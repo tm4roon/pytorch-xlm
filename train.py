@@ -256,6 +256,7 @@ def main(args):
         }
 
         if valid_loss < best_loss:
+            best_loss = valid_loss
             filename = os.path.join(args.savedir, 'checkpoint_best.pt') 
             torch.save(save_vars, filename)
         if epoch % args.save_epoch == 0:
@@ -265,7 +266,7 @@ def main(args):
         torch.save(save_vars, filename)
 
         # update
-        trainer.scheduler.step(train_loss)
+        trainer.scheduler.step(best_loss)
         epoch += 1
 
  
