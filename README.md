@@ -1,54 +1,53 @@
 # XLM: Cross-lingual Language Model Pretraining 
+An implementation of [Cross-lingual Language Model Pretraining (XLM)](https://arxiv.org/abs/1901.07291) using pytorch.
+You can choose following three training models. 
+  - Causal language model ( `-—task causal`)
+  - Masked language model ( `-—task masked`)
+  - Translation language model ( `-—task translation`)
 
-[Cross-lingual Language Model Pretraining](https://arxiv.org/abs/1901.07291)のpytorch実装。以下の3種類の言語モデルを利用可能。
-
-- Causal Language Model ( —task causal)
-- Masked Language Model ( —task masked)
-- Translation Language Model ( —task translation)
-<br>
+<p align=center>
+<img src=https://user-images.githubusercontent.com/53220859/65595686-3fe9f680-dfd0-11e9-900a-e17128e17153.png>
+</p>
 
 
+## Settings
+This code are depend on the following.
+- python==3.6.5
+- pytorch==1.1.0
+- torchtext==0.3.1
 
-## 環境構築
-
-```python3
-git clone https://github.com/marucha80t/pytorch-xlm.git
+```sh
+git clone https://github.com/t080/pytorch-xlm.git
 cd ./pytorch-xlm
 pip install -r requirements.txt
 ```
-
 <br>
 
 
+## Usages
+When a causal language model or a masked language model are trained, you must give a monolingual corpus (.txt) to the `--train` option.
 
-## 使用方法
-
-Causal language model / Masked language modelを学習する場合は、単言語コーパスを渡す。
-
-```python3
-python train.py --task casual(or masked) \
-                --train ./data/sample_train.txt \
-                --valid ./data/sample_valid.txt \
-                --savedir ./checkpoints \
-                --gpu
+```sh
+python train.py \
+  --task causal (or masked) \
+  --train /path/to/train.txt \
+  --savedir ./checkpoints \
+  --gpu
 ```
-
-
-
-Translation language modelを学習する場合は、並列コーパスを渡す。
-
-```python3
-python train.py --task casual(or masked) \
-                --train ./data/sample_train.tsv \
-                --valid ./data/sample_valid.tsv \
-                --savedir ./checkpoints \
-                --gpu
-```
-
 <br>
 
 
+When a translation language model is trained, you must give a parallel corpus (.tsv) to the `--train` option.
 
-## 参考
+```sh
+python train.py \
+  --task translation \
+  --train /path/to/train.tsv \
+  --savedir ./checkpoints \
+  --gpu
+```
+<br>
 
-- [Cross-lingual Language Model Pretraining](https://arxiv.org/abs/1901.07291)
+
+## References
+- [Lample, Guillaume, and Alexis Conneau. "Cross-lingual language model pretraining." arXiv preprint arXiv:1901.07291 (2019).](https://arxiv.org/abs/1901.07291)
