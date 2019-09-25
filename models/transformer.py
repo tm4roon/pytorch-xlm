@@ -140,7 +140,8 @@ class MaskedLM(BaseLM):
         if not pad_mask.any():
             pad_mask = None
 
-        self_attn_mask = None if self.bidirectional else self.buffered_future_mask(x)
+        self_attn_mask = None if self.bidirectional \
+            else self.buffered_future_mask(x)
 
         for layer in self.fwd_layers:
             x = layer(x, None, None, self_attn_mask, pad_mask, incremental_state)
@@ -149,7 +150,8 @@ class MaskedLM(BaseLM):
  
     def loss(self, criterion, srcs, tgts, refs=None):
         refs = srcs if tgts is None else torch.cat((srcs, tgts))
-        segments = torch.zeros_like(srcs) if tgts is None else torch.cat((torch.zeros_like(srcs), torch.ones_like(tgts)))
+        segments = torch.zeros_like(srcs) if tgts is None \
+            else torch.cat((torch.zeros_like(srcs), torch.ones_like(tgts)))
 
         slen, bsz = refs.size()
         sampler = self._sampling(refs)

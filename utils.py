@@ -10,33 +10,22 @@ import torch.optim as optim
 from torchtext.vocab import Vectors
 
 
-def save_field(savedir, fields):
-    for field in fields:
-        name, obj = field
-        save_path = os.path.join(savedir, f"{name}.field")
-        with open(save_path, 'wb') as fout:
-            dill.dump(obj, fout)
-
-
-def save_vocab(savedir, fields):
-    for field in fields:
-        name, obj = field
-        save_path = os.path.join(savedir, f"{name}_vocab.txt")
-        with open(save_path, 'w') as fout:
-            for w in obj.vocab.itos:
-                fout.write(w + '\n')
-
-
-def get_examples(samples, name):
-    if name == 'text':
-        return samples.text
-    if name == 'src': 
-        return samples.src
-    elif name == 'tgt': 
-        return samples.tgt
+def save_vocab(savedir, field):
+    save_path = os.path.join(savedir, f"vocab.txt")
+    with open(save_path, 'w') as fout:
+        for w in field.vocab.itos:
+            fout.write(w + '\n')
 
 
 def get_statics(iterator, name, field):
+    def get_examples(samples, name):
+        if name == 'text':
+            return samples.text
+        if name == 'src': 
+            return samples.src
+        elif name == 'tgt': 
+            return samples.tgt
+
     pad_idx = field.vocab.stoi['<pad>']
     unk_idx = field.vocab.stoi['<unk>']
     n_tokens = 0
@@ -66,18 +55,6 @@ def id2w(pred, field):
 def load_field(path):
     with open(path, 'rb') as f:
         return dill.load(f)
-
-
-
-
-# def update_params(old_params, new_params, except_list=[]):
-#     params = OrderedDict()
-#     for key in old_params.keys():
-#         if key in new_params.keys() and key not in except_list:
-#             params[key] = new_params[key]
-#         else:
-#             params[key] = old_params[key]
-#     return params 
 
 
 def get_optimizer(method):

@@ -10,8 +10,6 @@ def train_opts(parser):
         help='path to trained model')
     group.add_argument('--train', required=True,
         help='filename of the train data')
-    group.add_argument('--valid', required=True,
-        help='filename of the validation data')
     group.add_argument('--src-minlen', type=int, default=0,
         help='minimum sentence length of source side')
     group.add_argument('--tgt-minlen', type=int, default=0,
